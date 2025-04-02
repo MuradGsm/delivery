@@ -1,0 +1,78 @@
+services:
+  postgres:
+    image: postgres:14
+    environment:
+      - POSTGRES_USER=${POSTGRES_USER}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+      - POSTGRES_DB=${POSTGRES_DB}
+    env_file: .env
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - delivery-net
+
+  mongodb:
+    image: mongo:6
+    environment:
+      - MONGO_INITDB_ROOT_USERNAME=${MONGO_INITDB_ROOT_USERNAME}
+      - MONGO_INITDB_ROOT_PASSWORD=${MONGO_INITDB_ROOT_PASSWORD}
+      - MONGO_INITDB_DATABASE=${MONGO_INITDB_DATABASE}
+    env_file: .env
+    volumes:
+      - mongo_data:/data/db
+    networks:
+      - delivery-net
+
+  redis:
+    image: redis:7
+    networks:
+      - delivery-net
+
+  zookeeper:
+    image: bitnami/zookeeper:3.8
+    environment: 
+      - ALLOW_ANONYMOUS_LOGIN=yes
+    networks:
+     - delivery-net
+
+  kafka:
+    image: bitnami/kafka:3.4
+    environment:
+      - KAFKA_CFG_ADVERTISED_LISTENERS=PLAINTEXT://kafka:9092
+      - KAFKA_CFG_ZOOKEEPER_CONNECT=zookeeper:2181
+      - ALLOW_PLAINTEXT_LISTENER=yes
+    depends_on:
+      - zookeeper
+    networks:
+      - delivery-net
+
+  # users-service:
+  #   build: ./users-service
+  #   env_file: .env
+  #   ports:
+  #     -8000:8000
+  #   depends_on:
+  #     - postgres
+  #   networks:
+  #     - delivery-net
+    
+  # menu-service:
+  #   build: ./menu-service
+  #   env_file: .env
+  #   ports:
+  #     -8001:8000
+  #   depends_on:
+  #     - mongodb
+  #     - redis
+  #   networks:
+  #     - delivery-net
+  
+volumes:
+  postgres_data:
+  mongo_data:
+
+networks:
+  delivery-net:
+    driver: bridge
+
+
